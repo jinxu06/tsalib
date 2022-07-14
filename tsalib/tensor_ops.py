@@ -137,15 +137,24 @@ def warp (x, tfms, tfm_names, backend=None, debug=False):
     for sym, l, r in tfm_list:
         if debug:
             print(f'*** processing transform.. {sym}\n {l} -> {r}')
-        if sym == 'v' or sym == 'r': #view transform
+            
+        if sym == 'v':
+            # View
             new_shape = _view_transform(l, r, be.shape(ret))
             ret = be.view(ret, new_shape)
-        elif sym == 'p' or sym == 't':
+        elif sym == 's':
+            # Reshape
+            new_shape = _view_transform(l, r, be.shape(ret))
+            ret = ret.reshape(new_shape)
+        elif sym == 'p':
             perm_indices = _permute_transform(l, r)
             ret = be.transpose(ret, perm_indices)
         #elif sym == 'e':
         #    expand_shape = _expand_transform(l, r)
         #    ret = be.expand(ret, expand_shape)
+        elif sym == 'r':
+            repeats = [ir//il for il,ir in zip(l, r)]
+            ret = ret.repeat(repeats)
         elif sym == 'a':
             ret = alignto((ret, l), r)
         elif sym == 'c': 
